@@ -1,8 +1,8 @@
-name: Claude Code
+name: Claude Code (hardened)
 description: Run Claude Code AI assistant inside Home Assistant to create automations, debug issues, and manage your smart home configuration
-version: "1.2.65"
+version: "1.2.65-h1"
 slug: claudecode
-url: https://github.com/robsonfelix/robsonfelix-hass-addons
+url: https://github.com/facit/nothing
 arch:
   - amd64
   - aarch64
@@ -18,12 +18,10 @@ ingress_stream: true
 panel_icon: mdi:brain
 panel_title: Claude Code
 homeassistant_api: true
-auth_api: true
 hassio_api: true
-hassio_role: manager
-uart: true
-docker_api: true
-full_access: true
+# Enough for `ha core logs/check/restart`. Use `manager` only if Claude should
+# also install and configure other add-ons.
+hassio_role: homeassistant
 map:
   - homeassistant_config:rw
   - ssl:ro
@@ -39,7 +37,7 @@ options:
   terminal_theme: dark
   working_directory: /homeassistant
   session_persistence: true
-  auto_update_claude: true
+  auto_update_claude: false
   enable_remote_control: false
   remote_control_session_prefix: HomeAssistant
 schema:

@@ -1,4 +1,6 @@
-# Claude Code for Home Assistant
+# Claude Code for Home Assistant (hardened fork)
+
+A fork of [robsonfelix/robsonfelix-hass-addons](https://github.com/robsonfelix/robsonfelix-hass-addons/tree/main/claudecode) with reduced privileges. See [What this fork changes](#what-this-fork-changes).
 
 Run [Claude Code](https://docs.anthropic.com/en/docs/claude-code), Anthropic's AI-powered coding assistant, directly in your Home Assistant sidebar with full access to your configuration.
 
@@ -101,7 +103,7 @@ claude --continue
 | `terminal_theme` | dark or light | dark |
 | `working_directory` | Start directory | /homeassistant |
 | `session_persistence` | Use tmux for persistent sessions | true |
-| `auto_update_claude` | Auto-update Claude Code on startup (rolls back automatically if the new release cannot run) | true |
+| `auto_update_claude` | Auto-update Claude Code on startup (rolls back automatically if the new release cannot run) | false |
 | `enable_remote_control` | View and steer the session from claude.ai/code or the Claude mobile app. See the security note below | false |
 | `remote_control_session_prefix` | Prefix for auto-generated Remote Control session names | HomeAssistant |
 
@@ -109,7 +111,7 @@ claude --continue
 
 With `enable_remote_control`, sessions can be driven from `claude.ai/code` or the Claude mobile app (requires a Pro, Max, Team, or Enterprise subscription; API keys are not supported).
 
-**Security note:** this add-on runs as root with full access to your Home Assistant host. Anyone who can sign in to the linked Claude account can control it. Leave this off unless you need it.
+**Security note:** this add-on runs as root with read-write access to your Home Assistant config and API. Anyone who can sign in to the linked Claude account can control it. Leave this off unless you need it.
 
 ## File Locations
 
@@ -118,8 +120,10 @@ With `enable_remote_control`, sessions can be driven from `claude.ai/code` or th
 | `/homeassistant` | HA configuration directory | read-write |
 | `/share` | Shared folder | read-write |
 | `/media` | Media folder | read-write |
+| `/config` | This add-on's config folder (`/addon_configs/<slug>` on the host) | read-write |
 | `/ssl` | SSL certificates | read-only |
 | `/backup` | Backups | read-only |
+| `/data/claude` | Claude Code credentials, settings and transcripts (private to this add-on) | read-write |
 
 ## Session Persistence
 
@@ -142,10 +146,10 @@ If you're new to tmux:
 
 ### Customizing tmux
 
-Anything you put in `/homeassistant/.claudecode/tmux.conf` is loaded last and overrides the defaults. That file lives in your config directory, so it survives restarts, rebuilds and reinstalls:
+Anything you put in `/config/tmux.conf` is loaded last and overrides the defaults. On the host (Samba, File editor) it is `/addon_configs/<slug>/tmux.conf`. It survives restarts, rebuilds and reinstalls:
 
 ```bash
-echo 'set -g mouse off' > /homeassistant/.claudecode/tmux.conf
+echo 'set -g mouse off' > /config/tmux.conf
 ```
 
 Turning the mouse off restores native browser selection and copy/paste while keeping persistent sessions. Alternatively set `session_persistence: false` to drop tmux entirely.
@@ -196,16 +200,32 @@ If clicking the link doesn't work, hold `Ctrl+Shift` while selecting the URL wit
 
 ## Security
 
-### Authentication
-- **No API keys in add-on config**: Claude Code handles authentication itself
-- Credentials are stored securely in Claude Code's own directory (`~/.claude/`)
-- This is more secure than storing keys in Home Assistant's configuration
+### What this fork changes
 
-### Container Security
-- The Supervisor token is passed in via the environment and is not written to disk. Versions before 1.2.65 persisted it into `settings.json` inside your config directory, which is included in Home Assistant backups; 1.2.65 scrubs it on startup
-- Claude Code's credentials live in `/homeassistant/.claudecode/`, part of your config directory and therefore included in backups. Treat HA backups as secrets
-- File access is limited to mapped directories
-- The add-on runs as root with `full_access`, Docker socket access, and the Supervisor API. Anything that can drive Claude Code here can control your Home Assistant host
+| Upstream | This fork | Why |
+|----------|-----------|-----|
+| `docker_api`, `full_access`, `uart`, `auth_api` | Removed | Docker socket access and privileged mode amount to root on the host OS, beyond managing HA. Protection mode can stay on |
+| `hassio_role: manager` | `homeassistant` | Enough for `ha core logs/check/restart`. Change to `manager` if Claude should install or configure other add-ons |
+| ttyd on `0.0.0.0:7681`, no authentication | ttyd on `127.0.0.1`, behind nginx that only admits the Ingress gateway (`172.30.32.2`) | Any other add-on on the `hassio` network could open a root shell |
+| Credentials and transcripts in `/homeassistant/.claudecode` | `/data/claude` | The HA config dir is readable by other add-ons and often kept in git. Existing state is copied over on first start |
+| Permission rules like `Read(/homeassistant/**)` | `Read(//homeassistant/**)`, plus `ask` rules for `secrets.yaml`, `.storage/`, `.cloud/`, `/ssl` | A single leading slash is relative to `~/.claude`, so the old rules never matched. Secrets now prompt before being sent to the model |
+| `get_history` pre-approved | Prompts | Includes location history of people in the home |
+| CLAUDE.md regenerated into `~/.claude/CLAUDE.md` on every start | Shipped as the managed `/etc/claude-code/CLAUDE.md` | Your own `~/.claude/CLAUDE.md` is no longer overwritten |
+| Unpinned `hass-mcp`, `pymodbus`, `pyserial`, `mbpoll`, `@playwright/mcp`; unverified binaries | Pinned versions, SHA-256 checks for `ttyd` and `ha` | Each build pulled whatever was newest |
+| `auto_update_claude: true` | `false` | Keeps the installed version predictable |
+| `working_directory` ignored | Honoured | Bug |
+
+Without `uart`, Modbus tools work over TCP only. Add `uart: true` to `config.yaml` if you need serial devices.
+
+### Still true
+- Claude Code runs as root inside the container, with read-write access to your HA config and the HA API (it can control every entity). Treat anything that can drive it as able to control your home.
+- The Supervisor token is in the shell environment so `hass-mcp` can use it.
+- Text Claude reads (entity names, logs, web pages) can try to steer it. Don't run it with `--dangerously-skip-permissions`.
+- `/data` is included in this add-on's backups, so treat HA backups as secrets.
+- With `enable_remote_control`, anyone who can sign in to the linked Claude account can drive this session.
+
+### After migrating
+Once the add-on works, delete the old copy of your credentials and transcripts: `rm -rf /homeassistant/.claudecode`. Older upstream versions also wrote the Supervisor token into that folder, so backups made before upstream 1.2.65 contain it. Reinstalling the add-on issues a new token.
 
 ## Troubleshooting
 

@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.65-h1] - 2026-10-26
+
+Hardened fork of upstream 1.2.65.
+
+### Security
+- Removed `docker_api`, `full_access`, `uart` and `auth_api`; `hassio_role` lowered from `manager` to `homeassistant`
+- ttyd now listens on loopback; nginx on 7681 admits only the Ingress gateway (172.30.32.2) and the health check. Previously any add-on on the `hassio` network could open an unauthenticated root shell
+- Claude Code state moved from `/homeassistant/.claudecode` to `/data/claude` (mode 700), migrated automatically on first start
+- Permission rules use `//` absolute paths; the old single-slash rules resolved under `~/.claude` and never matched. Added `ask` rules for `secrets.yaml`, `.storage/`, `.cloud/`, `/ssl`, `/data`; `get_history` is no longer pre-approved
+- Pinned `hass-mcp`, `pymodbus`, `pyserial`, `mbpoll` (v1.5.4, commit-checked) and `@playwright/mcp`; SHA-256 checks for the `ttyd` and `ha` binaries
+- `auto_update_claude` defaults to `false`; removed `docker-cli` and the AppArmor `net_admin` capability
+
+### Fixed
+- `working_directory` is honoured
+- The add-on instructions ship as the managed `/etc/claude-code/CLAUDE.md` instead of overwriting `~/.claude/CLAUDE.md`, and no longer claim `/config` does not exist
+- The startup logic moved from an inline `CMD` into `claudecode-start.sh`; the Playwright MCP config is built with `jq` instead of string interpolation
+
 ## [1.2.65] - 2026-07-08
 
 ### Security

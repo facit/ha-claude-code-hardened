@@ -1,22 +1,14 @@
-# Robson Felix's Home Assistant Add-ons
+# Claude Code for Home Assistant (hardened fork)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Custom add-ons for Home Assistant.
+A fork of the [Claude Code add-on](https://github.com/robsonfelix/robsonfelix-hass-addons/tree/main/claudecode) by Robson Felix, with reduced privileges and the security fixes listed in [claudecode/README.md](claudecode/README.md#what-this-fork-changes).
 
-## Add-ons
-
-| Add-on | Description |
-|--------|-------------|
-| [Claude Code](claudecode/) | AI assistant for automations, debugging, and smart home management |
-| [Auto-Monocle](auto-monocle/) | Auto-discover HA cameras and expose to Alexa via Monocle Gateway |
-| [Playwright Browser](playwright-browser/) | Headless Chromium with CDP endpoint for browser automation |
+The upstream Auto-Monocle and Playwright Browser add-ons are not included. The `enable_playwright_mcp` option still works with upstream's Playwright Browser add-on.
 
 ## Installation
 
-[![Add Repository](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Frobsonfelix%2Frobsonfelix-hass-addons)
-
-Or manually: **Settings** → **Add-ons** → **Add-on Store** → **⋮** → **Repositories** → Add `https://github.com/robsonfelix/robsonfelix-hass-addons`
+**Settings** → **Add-ons** → **Add-on Store** → **⋮** → **Repositories** → Add `https://github.com/facit/nothing`
 
 ## License
 
