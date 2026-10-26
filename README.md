@@ -8,7 +8,7 @@ The upstream Auto-Monocle and Playwright Browser add-ons are not included. The `
 
 ## Installation
 
-**Settings** → **Add-ons** → **Add-on Store** → **⋮** → **Repositories** → Add `https://github.com/facit/nothing`
+**Settings** → **Add-ons** → **Add-on Store** → **⋮** → **Repositories** → Add `https://github.com/facit/ha-claude-code-hardened`
 
 ## License
 

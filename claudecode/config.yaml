@@ -2,7 +2,7 @@ name: Claude Code (hardened)
 description: Run Claude Code AI assistant inside Home Assistant to create automations, debug issues, and manage your smart home configuration
 version: "1.2.65-h1"
 slug: claudecode
-url: https://github.com/facit/nothing
+url: https://github.com/facit/ha-claude-code-hardened
 arch:
   - amd64
   - aarch64

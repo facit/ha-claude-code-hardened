@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Changed
+- Repository renamed to `facit/ha-claude-code-hardened`; URLs updated
+
 ## [1.2.65-h1] - 2026-10-26
 
 Hardened fork of upstream 1.2.65.
